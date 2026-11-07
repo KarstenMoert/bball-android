@@ -20,13 +20,20 @@ jobs:
       - name: Setup Android Build Template
         run: |
           echo "HOME=$HOME"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf android
           mkdir -p android
           unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d android
+          echo "=== NACH UNZIP, android/ ==="
           ls -la android/
-          ls -la android/build/ | head -n 30
+          echo "=== FALLS KEIN build/ DA IST, ALLES NACH build/ VERSCHIEBEN ==="
+          if [ ! -d "android/build" ]; then
+            mkdir -p android/build
+            mv android/* android/build/ 2>/dev/null || true
+          fi
+          echo "=== JETZT MUSS android/build/ EXISTIEREN ==="
+          ls -la android/
+          ls -la android/build/
+          ls -la android/build/build.gradle || echo "build.gradle NICHT GEFUNDEN"
       - name: Setup Godot Settings
         run: |
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
@@ -53,6 +60,7 @@ jobs:
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           echo "JAVA_HOME=$JAVA_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la android/build/
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
