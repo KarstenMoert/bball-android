@@ -39,7 +39,8 @@ jobs:
           mv templates/* .
           rm -rf templates *.tpz
           cp -r . ../4.3.0.stable/
-          ls -la 
+          ls -la
+      - name: Build
         run: |
           godot --headless --export-release Android BoballEditor.apk
       - uses: actions/upload-artifact@v4
