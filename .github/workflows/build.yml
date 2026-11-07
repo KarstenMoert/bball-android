@@ -40,13 +40,10 @@ jobs:
           rm -rf templates *.tpz
           cp -r . ../4.3.0.stable/
           ls -la
-      - name: Install Android Build Template
-        run: |
-          godot --headless --install-android-build-template
-          ls -la android/
       - name: Build
+        timeout-minutes: 15
         run: |
-          godot --headless --export-release Android BoballEditor.apk
+          godot --headless --export-release Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
           name: BoballEditor-APK
