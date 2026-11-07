@@ -44,7 +44,7 @@ jobs:
         timeout-minutes: 15
         run: |
           godot --headless --export-debug Android BoballEditor.apk --verbose
-- uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: BoballEditor-APK
           path: BoballEditor.apk
