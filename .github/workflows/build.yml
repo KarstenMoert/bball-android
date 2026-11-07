@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Clean Godot cache
+        run: |
+          rm -rf .godot
+          ls -la
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.3.0
@@ -43,20 +47,17 @@ jobs:
       - name: Setup Godot Android Settings
         run: |
           mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.3.xml << 'EOF'
-          <?xml version="1.0" encoding="UTF-8" ?>
-          <resource>
-            <string name="export/android/android_sdk_path">$HOME/Android/Sdk</string>
-            <string name="export/android/debug_keystore">/home/runner/.android/debug.keystore</string>
-            <string name="export/android/debug_keystore_user">androiddebugkey</string>
-            <string name="export/android/debug_keystore_pass">android</string>
-            <string name="export/android/force_system_user">false</string>
-          </resource>
-          EOF
           mkdir -p ~/.android
+          echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" > ~/.config/godot/editor_settings-4.3.xml
+          echo "<resource>" >> ~/.config/godot/editor_settings-4.3.xml
+          echo "<string name=\"export/android/android_sdk_path\">/home/runner/Android/Sdk</string>" >> ~/.config/godot/editor_settings-4.3.xml
+          echo "<string name=\"export/android/debug_keystore\">/home/runner/.android/debug.keystore</string>" >> ~/.config/godot/editor_settings-4.3.xml
+          echo "<string name=\"export/android/debug_keystore_user\">androiddebugkey</string>" >> ~/.config/godot/editor_settings-4.3.xml
+          echo "<string name=\"export/android/debug_keystore_pass\">android</string>" >> ~/.config/godot/editor_settings-4.3.xml
+          echo "</resource>" >> ~/.config/godot/editor_settings-4.3.xml
           keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
-          ls -la ~/.android/
           cat ~/.config/godot/editor_settings-4.3.xml
+          ls -la ~/.android/
       - name: Build
         timeout-minutes: 15
         run: |
