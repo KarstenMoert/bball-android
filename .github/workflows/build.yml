@@ -1,0 +1,23 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v1
+        with:
+          version: 4.3.0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Build
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/4.3.0.stable
+          godot --headless --export-release Android BoballEditor.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoballEditor-APK
+          path: BoballEditor.apk
