@@ -31,13 +31,15 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Download Export Templates
         run: |
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           mkdir -p ~/.local/share/godot/export_templates/4.3.0.stable
-          cd ~/.local/share/godot/export_templates/4.3.0.stable
+          cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           unzip -q Godot_v4.3-stable_export_templates.tpz
           mv templates/* .
           rm -rf templates *.tpz
-      - name: Build
+          cp -r . ../4.3.0.stable/
+          ls -la 
         run: |
           godot --headless --export-release Android BoballEditor.apk
       - uses: actions/upload-artifact@v4
