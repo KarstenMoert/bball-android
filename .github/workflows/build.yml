@@ -3,64 +3,25 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v5
-      - name: Clean Godot cache
+      - name: Setup
         run: |
           rm -rf .godot
-          ls -la
-      - uses: chickensoft-games/setup-godot@v2
-        with:
-          version: 4.3.0
-          use-dotnet: false
-      - uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - name: Setup Android SDK
-        run: |
-          export ANDROID_HOME=$HOME/Android/Sdk
-          export ANDROID_SDK_ROOT=$HOME/Android/Sdk
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          cd $ANDROID_HOME/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-          unzip -q tools.zip
-          mv cmdline-tools latest
-          rm tools.zip
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-      - name: Download Export Templates
-        run: |
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          mkdir -p ~/.local/share/godot/export_templates/4.3.0.stable
           cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           unzip -q Godot_v4.3-stable_export_templates.tpz
           mv templates/* .
           rm -rf templates *.tpz
-          cp -r . ../4.3.0.stable/
           ls -la
-      - name: Setup Godot Android Settings
-        run: |
-          mkdir -p ~/.config/godot
-          mkdir -p ~/.android
-          echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" > ~/.config/godot/editor_settings-4.3.xml
-          echo "<resource>" >> ~/.config/godot/editor_settings-4.3.xml
-          echo "<string name=\"export/android/android_sdk_path\">/home/runner/Android/Sdk</string>" >> ~/.config/godot/editor_settings-4.3.xml
-          echo "<string name=\"export/android/debug_keystore\">/home/runner/.android/debug.keystore</string>" >> ~/.config/godot/editor_settings-4.3.xml
-          echo "<string name=\"export/android/debug_keystore_user\">androiddebugkey</string>" >> ~/.config/godot/editor_settings-4.3.xml
-          echo "<string name=\"export/android/debug_keystore_pass\">android</string>" >> ~/.config/godot/editor_settings-4.3.xml
-          echo "</resource>" >> ~/.config/godot/editor_settings-4.3.xml
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
-          cat ~/.config/godot/editor_settings-4.3.xml
-          ls -la ~/.android/
       - name: Build
         timeout-minutes: 15
         run: |
+          mkdir -p /root/.android
+          keytool -genkey -v -keystore /root/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
