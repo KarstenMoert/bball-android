@@ -10,6 +10,10 @@ jobs:
       - name: Setup
         run: |
           rm -rf .godot
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "JAVA_HOME=$JAVA_HOME"
+          which java
+          ls /opt/ || true
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
@@ -17,11 +21,20 @@ jobs:
           mv templates/* .
           rm -rf templates *.tpz
           ls -la
+      - name: Setup Godot Settings
+        run: |
+          JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
+          echo "JAVA_DIR=$JAVA_DIR"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          mkdir -p ~/.config/godot
+          mkdir -p /root/.android
+          keytool -genkey -v -keystore /root/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
+          printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">/root/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
+          cat ~/.config/godot/editor_settings-4.3.xml
+          ls -la /root/.android/
       - name: Build
         timeout-minutes: 15
         run: |
-          mkdir -p /root/.android
-          keytool -genkey -v -keystore /root/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
