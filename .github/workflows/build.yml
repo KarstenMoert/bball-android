@@ -40,6 +40,23 @@ jobs:
           rm -rf templates *.tpz
           cp -r . ../4.3.0.stable/
           ls -la
+      - name: Setup Godot Android Settings
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.3.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8" ?>
+          <resource>
+            <string name="export/android/android_sdk_path">$HOME/Android/Sdk</string>
+            <string name="export/android/debug_keystore">/home/runner/.android/debug.keystore</string>
+            <string name="export/android/debug_keystore_user">androiddebugkey</string>
+            <string name="export/android/debug_keystore_pass">android</string>
+            <string name="export/android/force_system_user">false</string>
+          </resource>
+          EOF
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
+          ls -la ~/.android/
+          cat ~/.config/godot/editor_settings-4.3.xml
       - name: Build
         timeout-minutes: 15
         run: |
