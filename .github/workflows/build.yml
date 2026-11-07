@@ -10,10 +10,6 @@ jobs:
       - name: Setup
         run: |
           rm -rf .godot
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "JAVA_HOME=$JAVA_HOME"
-          which java
-          ls /opt/ || true
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
@@ -33,8 +29,9 @@ jobs:
           cat ~/.config/godot/editor_settings-4.3.xml
           ls -la /root/.android/
       - name: Build
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: |
+          chmod -R 777 .
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
