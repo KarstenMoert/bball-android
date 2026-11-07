@@ -17,21 +17,42 @@ jobs:
           mv templates/* .
           rm -rf templates *.tpz
           ls -la
+      - name: Setup Android Build Template
+        run: |
+          echo "HOME=$HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls ~/.local/share/godot/export_templates/4.3.stable/
+          rm -rf android
+          mkdir -p android
+          unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d android
+          ls -la android/
+          ls -la android/build/ | head -n 30
       - name: Setup Godot Settings
         run: |
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
           echo "JAVA_DIR=$JAVA_DIR"
+          echo "HOME=$HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
           mkdir -p ~/.config/godot
-          mkdir -p /root/.android
-          keytool -genkey -v -keystore /root/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
-          printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">/root/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
+          printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">%s/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
           cat ~/.config/godot/editor_settings-4.3.xml
-          ls -la /root/.android/
+          ls -la ~/.android/
+          echo "JAVA_HOME=$JAVA_DIR" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
       - name: Build
         timeout-minutes: 20
         run: |
           chmod -R 777 .
+          rm -rf .godot
+          mkdir -p .godot
+          chmod -R 777 .godot
+          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+          export ANDROID_HOME=$ANDROID_HOME
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
