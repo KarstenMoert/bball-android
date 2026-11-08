@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Setup
         run: |
-          rm -rf .godot
+          rm -rf .godot android
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
@@ -17,28 +17,6 @@ jobs:
           mv templates/* .
           rm -rf templates *.tpz
           ls -la
-      - name: Setup Android Build Template
-        run: |
-          rm -rf android /tmp/android_template
-          mkdir -p /tmp/android_template
-          unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d /tmp/android_template
-          echo "=== INHALT VOM ZIP ==="
-          ls -la /tmp/android_template/
-          echo "=== FALLS ZIP EINEN EINZELNEN UNTERORDNER HAT, DA REIN ==="
-          if [ $(ls -1 /tmp/android_template/ | wc -l) -eq 1 ] && [ -d "/tmp/android_template/$(ls -1 /tmp/android_template/)" ]; then
-            INNER=$(ls -1 /tmp/android_template/)
-            echo "Innerer Ordner: $INNER"
-            mkdir -p android/build
-            cp -r /tmp/android_template/$INNER/* android/build/
-          else
-            mkdir -p android/build
-            cp -r /tmp/android_template/* android/build/
-          fi
-          echo "=== JETZT MUSS DAS HIER STEHEN ==="
-          ls -la android/
-          ls -la android/build/
-          echo "=== CHECK: build.gradle da? ==="
-          ls -lh android/build/build.gradle && echo "OK - build.gradle gefunden" || echo "FEHLER - build.gradle NICHT da!"
       - name: Setup Godot Settings
         run: |
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
@@ -58,8 +36,6 @@ jobs:
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
-          echo "VOR BUILD - android/build/:"
-          ls -la android/build/
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
