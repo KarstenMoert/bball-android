@@ -7,6 +7,15 @@ jobs:
       image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v5
+      - name: Fix Dateiname
+        run: |
+          ls -la
+          if [ -f "Project.godot" ] && [ ! -f "project.godot" ]; then
+            echo "FEHLER GEFUNDEN: Project.godot statt project.godot - benenne um"
+            mv Project.godot project.godot
+          fi
+          ls -la project.godot && echo "OK - project.godot klein gefunden" || echo "FEHLER - project.godot fehlt!"
+          cat project.godot
       - name: Setup
         run: |
           rm -rf .godot android
@@ -25,31 +34,11 @@ jobs:
           printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">%s/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
           echo "JAVA_HOME=$JAVA_DIR" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-      - name: Diagnose Schreibrechte
-        run: |
-          echo "=== WER BIN ICH, WO BIN ICH ==="
-          id
-          pwd
-          echo "HOME=$HOME"
-          echo "=== WAS LIEGT HIER ==="
-          ls -la
-          echo "=== CHMOD + .godot NEU ==="
-          chmod -R 777 .
-          rm -rf .godot
-          mkdir -p .godot/editor .godot/imported
-          chmod -R 777 .godot
-          ls -lad .godot .godot/editor .godot/imported
-          echo "=== KANN ICH HIER SCHREIBEN? ==="
-          touch .godot/editor/filesystem_cache8 && echo "TOUCH filesystem_cache8: OK" || echo "TOUCH filesystem_cache8: FEHLER"
-          touch .godot/imported/test.md5 && echo "TOUCH test.md5: OK" || echo "TOUCH test.md5: FEHLER"
-          touch test_apk_write.txt && echo "TOUCH im Root: OK" || echo "TOUCH im Root: FEHLER"
-          ls -la .godot/editor/ .godot/imported/
-          echo "=== MOUNT / PLATTE ==="
-          df -h .
-          mount | grep -i github || mount | grep workspace || true
       - name: Build
         timeout-minutes: 20
         run: |
+          chmod -R 777 .
+          rm -rf .godot
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
