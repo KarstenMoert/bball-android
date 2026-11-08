@@ -36,12 +36,12 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || yes | $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
           ls -la $ANDROID_HOME/platforms/
           ls -la $ANDROID_HOME/build-tools/
-          echo "=== ERSTELLE KEYSTORE MIT -noprompt ==="
+          echo "=== ERSTELLE KEYSTORE ==="
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
           mkdir -p ~/.config/godot
           mkdir -p ~/.android
           rm -f ~/.android/debug.keystore
-          keytool -genkeypair -noprompt -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US"
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           echo "=== CHECK KEYSTORE ==="
           ls -lh ~/.android/debug.keystore && echo "OK - Keystore da" || echo "FEHLER - Keystore fehlt immer noch"
           printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">%s/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
