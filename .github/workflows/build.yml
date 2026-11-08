@@ -9,13 +9,10 @@ jobs:
       - uses: actions/checkout@v5
       - name: Fix Dateiname
         run: |
-          ls -la
           if [ -f "Project.godot" ] && [ ! -f "project.godot" ]; then
-            echo "FEHLER GEFUNDEN: Project.godot statt project.godot - benenne um"
             mv Project.godot project.godot
           fi
-          ls -la project.godot && echo "OK - project.godot klein gefunden" || echo "FEHLER - project.godot fehlt!"
-          cat project.godot
+          ls -la project.godot
       - name: Setup
         run: |
           rm -rf .godot android
@@ -25,6 +22,15 @@ jobs:
           unzip -q Godot_v4.3-stable_export_templates.tpz
           mv templates/* .
           rm -rf templates *.tpz
+      - name: Setup Android Build Template
+        run: |
+          rm -rf android /tmp/android_template
+          mkdir -p /tmp/android_template
+          unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d /tmp/android_template
+          mkdir -p android/build
+          cp -r /tmp/android_template/* android/build/
+          ls -la android/build/
+          ls -lh android/build/build.gradle && echo "OK - build.gradle gefunden" || echo "FEHLER"
       - name: Setup Godot Settings
         run: |
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
@@ -42,6 +48,7 @@ jobs:
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
+          ls -la android/build/
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
