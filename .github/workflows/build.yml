@@ -30,53 +30,33 @@ jobs:
           mkdir -p android/build
           cp -r /tmp/android_template/* android/build/
           ls -la android/build/
-      - name: Setup Godot Settings
+      - name: Setup SDK 34 + Keystore
         run: |
+          echo "=== INSTALLIERE ANDROID 34 ==="
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || yes | $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
+          ls -la $ANDROID_HOME/platforms/
+          ls -la $ANDROID_HOME/build-tools/
+          echo "=== ERSTELLE KEYSTORE MIT -noprompt ==="
           JAVA_DIR=$(dirname $(dirname $(readlink -f $(which java))))
           mkdir -p ~/.config/godot
           mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US" || true
+          rm -f ~/.android/debug.keystore
+          keytool -genkeypair -noprompt -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -d "CN=Android Debug,O=Android,C=US"
+          echo "=== CHECK KEYSTORE ==="
+          ls -lh ~/.android/debug.keystore && echo "OK - Keystore da" || echo "FEHLER - Keystore fehlt immer noch"
           printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">%s/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
+          cat ~/.config/godot/editor_settings-4.3.xml
           echo "JAVA_HOME=$JAVA_DIR" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-      - name: Diagnose Was Godot Sieht
-        run: |
-          echo "=== 1. WAS STEHT IN DEN EDITOR SETTINGS? ==="
-          cat ~/.config/godot/editor_settings-4.3.xml
-          echo ""
-          echo "=== 2. WAS IST ANDROID_HOME / JAVA_HOME? ==="
-          echo "ANDROID_HOME=[$ANDROID_HOME]"
-          echo "JAVA_HOME=[$JAVA_HOME]"
-          echo "HOME=[$HOME]"
-          echo ""
-          echo "=== 3. EXISTIERT DER ANDROID SDK ORDNER? ==="
-          ls -la "$ANDROID_HOME" || echo "ANDROID_HOME EXISTIERT NICHT"
-          echo ""
-          echo "=== 4. BUILD-TOOLS + PLATFORMS ==="
-          ls -la "$ANDROID_HOME/build-tools" || echo "kein build-tools Ordner"
-          ls -la "$ANDROID_HOME/platforms" || echo "kein platforms Ordner"
-          echo ""
-          echo "=== 5. EXISTIERT JAVA? ==="
-          ls -la "$(dirname $(dirname $(readlink -f $(which java))))/bin/java" || echo "java nicht gefunden"
-          java -version || echo "java -version fehlgeschlagen"
-          echo ""
-          echo "=== 6. EXISTIERT KEYSTORE? ==="
-          ls -lh ~/.android/debug.keystore || echo "keystore fehlt"
-          echo ""
-          echo "=== 7. WAS STEHT IN project.godot? ==="
-          cat project.godot
-          echo ""
-          echo "=== 8. WAS STEHT IN export_presets.cfg? ==="
-          cat export_presets.cfg
-          echo ""
-          echo "=== 9. TEMPLATE DA? ==="
-          ls -lh android/build/build.gradle android/build/config.gradle android/build/gradlew || echo "Template fehlt"
       - name: Build
-        timeout-minutes: 20
+        timeout-minutes: 25
         run: |
+          chmod -R 777 .
+          rm -rf .godot
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
+          ls -lh ~/.android/debug.keystore
           godot --headless --export-debug Android BoballEditor.apk --verbose
       - uses: actions/upload-artifact@v4
         with:
