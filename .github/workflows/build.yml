@@ -42,72 +42,23 @@ jobs:
           printf '<?xml version="1.0" encoding="UTF-8" ?>\n<resource>\n<string name="export/android/android_sdk_path">%s</string>\n<string name="export/android/debug_keystore">%s/.android/debug.keystore</string>\n<string name="export/android/debug_keystore_user">androiddebugkey</string>\n<string name="export/android/debug_keystore_pass">android</string>\n<string name="export/android/java_sdk_path">%s</string>\n</resource>\n' "$ANDROID_HOME" "$HOME" "$JAVA_DIR" > ~/.config/godot/editor_settings-4.3.xml
           echo "JAVA_HOME=$JAVA_DIR" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-      - name: TEST - Frisches Leeres Projekt
-        run: |
-          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-          export ANDROID_HOME=$ANDROID_HOME
-          export ANDROID_SDK_ROOT=$ANDROID_HOME
-          echo "=== ERSTELLE FRISCHES TEST-PROJEKT ==="
-          rm -rf /tmp/testproj
-          mkdir -p /tmp/testproj
-          cp -r android /tmp/testproj/android
-          cat > /tmp/testproj/project.godot <<'EOF'
-          ; Engine configuration file.
-          config_version=5
-          [application]
-          config/name="TestProj"
-          run/main_scene="res://Main.tscn"
-          config/features=PackedStringArray("4.3")
-          [rendering]
-          renderer/rendering_method="gl_compatibility"
-          EOF
-          cat > /tmp/testproj/Main.tscn <<'EOF'
-          [gd_scene load_steps=2 format=3]
-          [ext_resource type="Script" path="res://Main.gd" id="1"]
-          [node name="Main" type="Node2D"]
-          script = ExtResource("1")
-          EOF
-          cat > /tmp/testproj/Main.gd <<'EOF'
-          extends Node2D
-          func _ready():
-            print("hello")
-          EOF
-          cat > /tmp/testproj/export_presets.cfg <<'EOF'
-          [preset.0]
-          name="Android"
-          platform="Android"
-          runnable=true
-          export_filter="all_resources"
-          export_path="/tmp/testproj/Test.apk"
-          [preset.0.options]
-          version/code=1
-          version/name="1.0"
-          package/unique_name="com.test.testproj"
-          package/name="TestProj"
-          package/signed=false
-          gradle_build/use_gradle_build=true
-          EOF
-          cat /tmp/testproj/project.godot
-          cat /tmp/testproj/export_presets.cfg
-          echo "=== EXPORTIERE TEST-PROJEKT ==="
-          cd /tmp/testproj
-          godot --headless --export-debug Android Test.apk --verbose || echo "TEST-PROJEKT FEHLGESCHLAGEN - EXIT CODE $?"
-          ls -lh /tmp/testproj/Test.apk && echo "TEST-PROJEKT OK - APK DA" || echo "TEST-PROJEKT KEINE APK"
-          echo "=== JETZT DEIN ECHTES PROJEKT ==="
-          cd /__w/bball-android/bball-android
-          ls -la
-      - name: Build Echtes Projekt
+      - name: Build
         timeout-minutes: 25
         run: |
+          chmod -R 777 .
+          rm -rf .godot
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
-          godot --headless --export-debug Android BoballEditor.apk --verbose || echo "ECHTES PROJEKT FEHLGESCHLAGEN"
-          ls -lh BoballEditor.apk || echo "KEINE APK"
+          echo "=== SCHRITT 1: NUR IMPORT, KEIN EXPORT ==="
+          godot --headless --import
+          echo "=== IMPORT FERTIG, JETZT EXPORT ==="
+          ls -la .godot/
+          echo "=== SCHRITT 2: NUR EXPORT, KEIN IMPORT ==="
+          godot --headless --export-debug Android BoballEditor.apk --verbose
+          echo "=== CHECK APK ==="
+          ls -lh BoballEditor.apk && echo "OK - APK DA" || echo "FEHLER - KEINE APK"
       - uses: actions/upload-artifact@v4
         with:
           name: BoballEditor-APK
-          path: |
-            BoballEditor.apk
-            /tmp/testproj/Test.apk
-          if-no-files-found: warn
+          path: BoballEditor.apk
