@@ -3,7 +3,13 @@ extends EditorScript
 
 func _run():
 	print("=== DUMP START ===")
-	var export_singleton = EditorExport.get_singleton()
+	var export_singleton = Engine.get_singleton("EditorExport")
+	print("export_singleton: ", export_singleton)
+	if export_singleton == null:
+		print("KEIN EditorExport Singleton gefunden!")
+		print("Alle Singletons: ", Engine.get_singleton_list())
+		print("=== DUMP END ===")
+		return
 	print("presets: ", export_singleton.get_export_preset_count())
 	for i in range(export_singleton.get_export_preset_count()):
 		var preset = export_singleton.get_export_preset(i)
