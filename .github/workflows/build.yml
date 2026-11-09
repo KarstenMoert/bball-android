@@ -24,8 +24,6 @@ jobs:
           fi
           echo "=== project.godot ==="
           cat project.godot
-          echo "=== export_presets.cfg ==="
-          cat export_presets.cfg
           ls -la
       - name: Setup
         run: |
@@ -69,12 +67,10 @@ jobs:
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           echo "=== SCHRITT 1: NUR IMPORT ==="
           godot --headless --import
-          echo "=== SCHRITT 2: DIAGNOSE, KEIN EXPORT ==="
-          godot --headless --editor --script dump.gd --quit || true
-          echo "=== SCHRITT 3: EXPORT VERSUCH ==="
-          godot --headless --export-debug Android BoballEditor.apk --verbose || true
+          echo "=== SCHRITT 2: NUR EXPORT ==="
+          godot --headless --export-debug Android BoballEditor.apk --verbose
           echo "=== CHECK APK ==="
-          ls -lh BoballEditor.apk && echo "OK - APK DA" || echo "KEINE APK"
+          ls -lh BoballEditor.apk && echo "OK - APK DA" || echo "FEHLER - KEINE APK"
       - uses: actions/upload-artifact@v4
         with:
           name: BoballEditor-APK
