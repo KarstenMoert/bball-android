@@ -1,7 +1,6 @@
-@tool
-extends EditorScript
+extends SceneTree
 
-func _run():
+func _init():
 	print("=== DUMP START ===")
 	var export_singleton = Engine.get_singleton("EditorExport")
 	print("export_singleton: ", export_singleton)
@@ -9,6 +8,7 @@ func _run():
 		print("KEIN EditorExport Singleton gefunden!")
 		print("Alle Singletons: ", Engine.get_singleton_list())
 		print("=== DUMP END ===")
+		quit()
 		return
 	print("presets: ", export_singleton.get_export_preset_count())
 	for i in range(export_singleton.get_export_preset_count()):
@@ -27,3 +27,4 @@ func _run():
 		print("can_export err: [", err, "]")
 		print("missing_templates: ", missing)
 	print("=== DUMP END ===")
+	quit()
