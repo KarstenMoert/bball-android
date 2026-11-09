@@ -1,12 +1,13 @@
+@tool
 extends SceneTree
 
 func _init():
 	print("=== DUMP START ===")
-	var export_singleton = Engine.get_singleton("EditorExport")
+	print("EditorInterface: ", EditorInterface.get_singleton())
+	var export_singleton = EditorExport.get_singleton()
 	print("export_singleton: ", export_singleton)
 	if export_singleton == null:
-		print("KEIN EditorExport Singleton gefunden!")
-		print("Alle Singletons: ", Engine.get_singleton_list())
+		print("KEIN EditorExport gefunden!")
 		print("=== DUMP END ===")
 		quit()
 		return
