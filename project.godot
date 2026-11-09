@@ -2,7 +2,7 @@
 config_version=5
 
 [application]
-name="BoballEditor"
+config/name="BoballEditor"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.3")
 config/icon="res://icon.png"
