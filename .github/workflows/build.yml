@@ -10,6 +10,8 @@ jobs:
       - name: Fix Dateiname
         run: |
           ls -la
+          rm -f dump.gd
+          rm -rf android
           if [ -f "Project.godot" ] && [ ! -f "project.godot" ]; then
             mv Project.godot project.godot
           fi
@@ -27,7 +29,7 @@ jobs:
           ls -la
       - name: Setup
         run: |
-          rm -rf .godot android
+          rm -rf .godot
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           cd ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
@@ -35,16 +37,6 @@ jobs:
           mv templates/* .
           rm -rf templates *.tpz
           ls -lh
-      - name: Setup Android Build Template
-        run: |
-          rm -rf android /tmp/android_template
-          mkdir -p /tmp/android_template
-          unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d /tmp/android_template
-          mkdir -p android/build
-          cp -r /tmp/android_template/* android/build/
-          touch android/build/.gdignore
-          touch android/.gdignore
-          ls -la android/build/.gdignore android/.gdignore
       - name: Setup SDK 34 + Keystore
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || yes | $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
