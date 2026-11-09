@@ -9,30 +9,24 @@ jobs:
       - uses: actions/checkout@v5
       - name: Fix Dateiname
         run: |
-          echo "=== VORHER ==="
           ls -la
           if [ -f "Project.godot" ] && [ ! -f "project.godot" ]; then
             mv Project.godot project.godot
           fi
           if [ -f "main.tscn" ] && [ ! -f "Main.tscn" ]; then
             mv main.tscn Main.tscn
-            echo "main.tscn -> Main.tscn umbenannt"
           fi
           if [ -f "main.gd" ] && [ ! -f "Main.gd" ]; then
             mv main.gd Main.gd
-            echo "main.gd -> Main.gd umbenannt"
           fi
           if [ -f "Main.tscn" ]; then
-            echo "=== INHALT VON Main.tscn ==="
-            cat Main.tscn
-            echo "=== REPARIERE VERWEIS IN Main.tscn ==="
             sed -i 's|res://main.gd|res://Main.gd|g' Main.tscn || true
-            cat Main.tscn
           fi
-          echo "=== NACHHER ==="
+          echo "=== project.godot ==="
+          cat project.godot
+          echo "=== export_presets.cfg ==="
+          cat export_presets.cfg
           ls -la
-          echo "=== project.godot main_scene ==="
-          grep -i "main_scene" project.godot || echo "kein main_scene gefunden"
       - name: Setup
         run: |
           rm -rf .godot android
@@ -42,6 +36,7 @@ jobs:
           unzip -q Godot_v4.3-stable_export_templates.tpz
           mv templates/* .
           rm -rf templates *.tpz
+          ls -lh
       - name: Setup Android Build Template
         run: |
           rm -rf android /tmp/android_template
@@ -49,7 +44,9 @@ jobs:
           unzip -q ~/.local/share/godot/export_templates/4.3.stable/android_source.zip -d /tmp/android_template
           mkdir -p android/build
           cp -r /tmp/android_template/* android/build/
-          ls -la android/build/
+          touch android/build/.gdignore
+          touch android/.gdignore
+          ls -la android/build/.gdignore android/.gdignore
       - name: Setup SDK 34 + Keystore
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || yes | $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
@@ -70,14 +67,14 @@ jobs:
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           export ANDROID_HOME=$ANDROID_HOME
           export ANDROID_SDK_ROOT=$ANDROID_HOME
-          echo "=== SCHRITT 1: NUR IMPORT, KEIN EXPORT ==="
+          echo "=== SCHRITT 1: NUR IMPORT ==="
           godot --headless --import
-          echo "=== IMPORT FERTIG, JETZT EXPORT ==="
-          ls -la .godot/
-          echo "=== SCHRITT 2: NUR EXPORT, KEIN IMPORT ==="
-          godot --headless --export-debug Android BoballEditor.apk --verbose
+          echo "=== SCHRITT 2: DIAGNOSE, KEIN EXPORT ==="
+          godot --headless --editor --script dump.gd --quit || true
+          echo "=== SCHRITT 3: EXPORT VERSUCH ==="
+          godot --headless --export-debug Android BoballEditor.apk --verbose || true
           echo "=== CHECK APK ==="
-          ls -lh BoballEditor.apk && echo "OK - APK DA" || echo "FEHLER - KEINE APK"
+          ls -lh BoballEditor.apk && echo "OK - APK DA" || echo "KEINE APK"
       - uses: actions/upload-artifact@v4
         with:
           name: BoballEditor-APK
